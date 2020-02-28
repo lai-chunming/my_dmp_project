@@ -3,10 +3,11 @@ package com.tags
 import java.util.Properties
 
 import com.etl.loadData
-import com.util.TagsUtils
+import com.util.{JedisUtils, TagsUtils}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
+import redis.clients.jedis.Jedis
 
 object TagsContext {
   /**
@@ -22,6 +23,8 @@ object TagsContext {
     val df: DataFrame = loadData.getParquetData(inputPath)
     //读取app的字典文件
     val spark: SparkSession = loadData.getSpark()
+    //获取jedis
+    val jedis: Jedis = JedisUtils.getJedis()
     val dic: RDD[String] = spark.sparkContext.textFile(dicPath)
     //广播
     val words: collection.Map[String, String] = dic.map(w => {
@@ -50,7 +53,10 @@ object TagsContext {
       val devTag: List[(String, Int)] = DevTag.makeTags(row)
       //关键字标签
       val keyWordTag: List[(String, Int)] = KeyWordTag.makeTags(row,broadcastSW)
+      //位置标签
+      val locationTag: List[(String, Int)] = LocationTag.makeTags(row)
       //商圈标签
+      val businessTag: List[(String, Int)] = BusinessTag.makeTags(row,jedis)
 
     })
   }
