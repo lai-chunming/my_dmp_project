@@ -1,6 +1,4 @@
 package com.tags
-
-import org.apache.commons.lang3.StringUtils
 import org.apache.spark.sql.Row
 
 object LocationTag extends Tags {
