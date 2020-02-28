@@ -2,6 +2,7 @@ package com.util
 
 import java.util.Properties
 
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 
 object saveDF {
@@ -16,7 +17,7 @@ object saveDF {
       """
         |select count(*)as ct,provincename,cityname from source group by provincename,cityname
       """.stripMargin
-    spark.sql(sql).write.json("E:/1.BigData/4.project/project_3/data/city")
+    spark.sql(sql).coalesce(1).write.json("E:/1.BigData/4.project/project_3/data/city")
   }
 
   def df2Mysql(df:DataFrame,spark:SparkSession): Unit ={
@@ -25,13 +26,16 @@ object saveDF {
       """
         |select count(*)as ct,provincename,cityname from source group by provincename,cityname
       """.stripMargin
-    val url="jdbc:mysql://mini1-sp:3306/spark"
-    val table="cnt_by_city"
     val properties=new Properties()
-    properties.put("user","root")
-    properties.put("password","950816")
-    spark.sql(sql).write.mode(SaveMode.Append).jdbc(url,table,properties)
+    properties.load(this.getClass().getClassLoader.getResourceAsStream("mysql.properties"))
+    spark.sql(sql).write.mode(SaveMode.Append).jdbc(
+      properties.getProperty("jdbc.url"),
+      properties.getProperty("jdbc.table"),
+      properties)
     spark.stop()
+  }
+  def log2parquet(df:DataFrame): Unit ={
+    df.write.parquet("E:/1.BigData/4.project/project_3/data/dataFrame")
   }
 
 }

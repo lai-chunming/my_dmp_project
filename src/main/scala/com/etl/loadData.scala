@@ -1,12 +1,14 @@
 package com.etl
 
+import java.util.Properties
+
 import breeze.numerics.Bessel.i1
 import com.util.{GetSchema, Str2Type, saveDF}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 
-object log2parquet {
+object loadData {
   def main(args: Array[String]): Unit = {
     val conf=new SparkConf().
       setMaster("local[*]").
@@ -104,13 +106,21 @@ object log2parquet {
       )
     })
     val dataFrame: DataFrame = spark.createDataFrame(rdd,GetSchema.logStrucType)
-    //dataFrame.write.parquet("E:/1.BigData/4.project/project_3/data/dataFrame")
-    //saveDF.df2Mysql(dataFrame,spark)
-    val newRDD: RDD[Row] = dataFrame.rdd
-    val pro_count = newRDD.map(line => {
-      (line.getAs("provincename").toString+"_"+ line.getAs("cityname").toString, 1)
-    }).reduceByKey(_+_)
-
 }
-
+  def getParquetData(inputPath:String)={
+    val conf =new SparkConf()
+      .setAppName(this.getClass.toString)
+      .setMaster("local")
+      .set("spark.serializer","org.apache.spark.serializer.KryoSerializer")
+    val spark=SparkSession.builder().config(conf).getOrCreate()
+    spark.read.parquet(inputPath)
+  }
+  def getSpark() ={
+    val conf=new SparkConf().
+      setMaster("local[*]").
+      setAppName(this.getClass.getName).
+      set("spark.serializer","org.apache.spark.serializer.KryoSerializer")
+    val spark=SparkSession.builder().config(conf).getOrCreate()
+    spark
+  }
 }
